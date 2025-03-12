@@ -1,0 +1,38 @@
+import os
+import fcntl
+import struct
+
+# 使用 os.open() 代替 open()
+tun = os.open('/dev/net/tun', os.O_RDWR)
+
+# 常量定义
+TUNSETIFF = 0x400454ca  # 来自Linux内核头文件
+IFF_TUN = 0x0001
+IFF_NO_PI = 0x1000
+
+# 配置tun接口
+ifr = struct.pack('16sH', b'tun0', IFF_TUN | IFF_NO_PI)
+fcntl.ioctl(tun, TUNSETIFF, ifr)
+
+# 准备要写入的数据包
+packet = bytearray([
+    0x45, 0x00, 0x00, 0x28,  # IP头: 版本、服务类型、总长度
+    0xab, 0xcd, 0x00, 0x00,  # 标识、标志、片偏移
+    0x40, 0x01, 0xa6, 0x6c,  # TTL、协议(ICMP)、头校验和
+    0x0a, 0x00, 0x00, 0x01,  # 源IP: 10.0.0.1
+    0x0a, 0x00, 0x00, 0x02,  # 目标IP: 10.0.0.2
+    
+    # ICMP回显请求
+    0x08, 0x00, 0x00, 0x00,  # 类型、代码、校验和
+    0x00, 0x01, 0x00, 0x01,  # 标识符、序列号
+    0x00, 0x00, 0x00, 0x00,  # 数据
+    0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00
+])
+
+# 使用 os.write() 写入数据到tun接口
+os.write(tun, bytes(packet))
+print("数据包已写入tun0接口")
+
+# 关闭接口
+os.close(tun)
