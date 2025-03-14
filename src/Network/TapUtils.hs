@@ -1,6 +1,4 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
-{-# HLINT ignore "Functor law" #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 module Network.TapUtils
   ( allocTap,
